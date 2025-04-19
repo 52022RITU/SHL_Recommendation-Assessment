@@ -1,25 +1,49 @@
-# FASTAPI BACKEND
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from recommender import SHLRecommender
+from flask import Flask, request, jsonify
 
-app = FastAPI(title="SHL Assessment Recommender API")
-recommender = SHLRecommender()
+app = Flask(__name__)
 
-class Query(BaseModel):
-    query: str
+# Health check endpoint
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify({"status": "ok"}), 200
 
-@app.get("/health")
-def health_check():
-    return {"status": "healthy"}
+# Dummy recommendations (replace with your actual logic)
+def get_recommendations(query):
+    return [
+        {
+            "assessment_name": "SHL Numerical Reasoning",
+            "url": "https://www.shl.com/example-numerical",
+            "remote_support": "Yes",
+            "adaptive": "Yes",
+            "duration": "30 minutes",
+            "test_type": "Cognitive"
+        },
+        {
+            "assessment_name": "SHL Verbal Reasoning",
+            "url": "https://www.shl.com/example-verbal",
+            "remote_support": "Yes",
+            "adaptive": "No",
+            "duration": "25 minutes",
+            "test_type": "Cognitive"
+        }
+    ]
 
-@app.post("/recommend")
-def recommend(query_data: Query):
-    try:
-        recommendations = recommender.get_recommendations(query_data.query)
-        return {"recommended_assessments": recommendations}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+# Recommend endpoint
+@app.route('/recommend', methods=['POST'])
+def recommend():
+    data = request.get_json()
+    query = data.get("query")
+
+    if not query:
+        return jsonify({"error": "Query is required"}), 400
+
+    recommendations = get_recommendations(query)
+    return jsonify({"recommendations": recommendations}), 200
+
+# Run locally
+if __name__ == '__main__':
+    app.run(debug=True)
+
 
 
 
